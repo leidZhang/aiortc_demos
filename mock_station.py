@@ -32,7 +32,7 @@ class StationClient(WebRTCClient):
 
     def _setup_callbacks(self) -> None:
         @self.pc.on("track")
-        def on_track(track):
+        def on_track(track: VideoStreamTrack):
             if track.kind == "video":
                 self.__handle_video_track(track)
 
