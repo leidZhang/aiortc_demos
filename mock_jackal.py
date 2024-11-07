@@ -7,6 +7,7 @@ import numpy as np
 from aiortc import RTCDataChannel, VideoStreamTrack
 
 from signaling_utils import WebRTCClient, initiate_signaling
+from settings import *
 
 
 class CameraStreamTrack(VideoStreamTrack):
@@ -51,7 +52,7 @@ class JackalClient(WebRTCClient):
 
 
 async def run_initiator() -> None:
-    initiator: WebRTCClient = JackalClient("localhost", 1234)
+    initiator: WebRTCClient = JackalClient(IP, PORT)
     await initiator.run()
 
 

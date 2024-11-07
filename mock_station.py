@@ -7,6 +7,7 @@ import numpy as np
 from aiortc import RTCDataChannel, VideoStreamTrack
 
 from signaling_utils import WebRTCClient, receive_signaling
+from settings import *
 
 
 class VideoFrameProcessor(VideoStreamTrack):
@@ -50,7 +51,7 @@ class StationClient(WebRTCClient):
 
 
 async def run_receiver() -> None:
-    receiver: WebRTCClient = StationClient("localhost", 1234)
+    receiver: WebRTCClient = StationClient(IP, PORT)
     await receiver.run()
 
 

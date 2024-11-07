@@ -4,8 +4,9 @@ import logging
 
 import websockets
 
-clients = set()
+from settings import *
 
+clients = set()
 
 async def handler(websocket, path):
     # Register client
@@ -31,7 +32,7 @@ async def handler(websocket, path):
 
 
 async def main():
-    async with websockets.serve(handler, "localhost", 1234):
+    async with websockets.serve(handler, IP, PORT):
         await asyncio.Future()  # Run forever
 
 
