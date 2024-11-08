@@ -1,5 +1,6 @@
 import time
 import json
+import logging
 import asyncio
 import fractions
 from typing import Tuple
@@ -87,7 +88,7 @@ class JackalClient(WebRTCClient):
 
         @self.data_channel.on("message")
         def on_message(message: str) -> None:
-            print(f"Received message {message} from workstation")
+            print(f"Received message: {message}")
 
         @self.data_channel.on("close")
         def on_close() -> None:
@@ -110,4 +111,5 @@ async def run_initiator() -> None:
 
 
 if __name__ == "__main__":
+    logging.basicConfig(level=logging.DEBUG)
     asyncio.run(run_initiator())
