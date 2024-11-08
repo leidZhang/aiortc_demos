@@ -13,10 +13,11 @@ from settings import *
 class CameraStreamTrack(VideoStreamTrack):
     def __init__(self, camera_id: int = 0) -> None:
         super().__init__()
+        self.pts: int = -1
         self.cap: cv2.VideoCapture = cv2.VideoCapture(camera_id)
 
     async def recv(self) -> av.VideoFrame:
-        pts, time_base = await self.next_timestamp()
+        self.pts, time_base = await self.next_timestamp()
         ret, frame = self.cap.read()
         if not ret:
             return None
@@ -27,8 +28,8 @@ class CameraStreamTrack(VideoStreamTrack):
 
         # Create VideoFrame
         video_frame: av.VideoFrame = av.VideoFrame.from_ndarray(frame, format="rgb24")
-        video_frame.pts, video_frame.time_base = pts, time_base
-        print(f"Received frame at {pts}")
+        video_frame.pts, video_frame.time_base = self.pts, time_base
+
         return video_frame
 
 

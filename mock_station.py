@@ -13,10 +13,12 @@ from settings import *
 class VideoFrameProcessor(VideoStreamTrack):
     def __init__(self, track) -> None:
         super().__init__()
-        self.track = track
+        self.track: VideoStreamTrack = track
+        self.pts: int = -1
 
     async def recv(self) -> av.VideoFrame:
         frame: av.VideoFrame = await self.track.recv()
+        self.pts = frame.pts # update pts here for synchronization
         image: np.ndarray = frame.to_ndarray(format="bgr24")
 
         cv2.imshow("Video", image)
