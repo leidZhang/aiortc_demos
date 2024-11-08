@@ -30,6 +30,22 @@ class StationClient(WebRTCClient):
         self.data_channel: RTCDataChannel = None
 
     def _setup_callbacks(self) -> None:
+        @self.pc.on("datachannel")
+        async def on_datachannel(channel: RTCDataChannel) -> None:
+            self.data_channel = channel
+
+            @self.data_channel.on("open")
+            def on_open() -> None:
+                print("Data channel opened by Jackal")
+
+            @self.data_channel.on("message")
+            def on_message(message: str) -> None:
+                print(f"Received message: {message} from Jackal")
+
+            @self.data_channel.on("close")
+            def on_close() -> None:
+                print("Data channel closed by Jackal")
+
         @self.pc.on("track")
         def on_track(track: VideoStreamTrack):
             if track.kind == "video":
