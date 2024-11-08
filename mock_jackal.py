@@ -87,7 +87,7 @@ class JackalClient(WebRTCClient):
 
         @self.data_channel.on("message")
         def on_message(message: str) -> None:
-            print(f"Received message: {message}")
+            print(f"Received message {message} from workstation")
 
         @self.data_channel.on("close")
         def on_close() -> None:

@@ -1,3 +1,4 @@
+import logging
 import asyncio
 
 import av
@@ -41,6 +42,7 @@ class StationClient(WebRTCClient):
             @self.data_channel.on("message")
             def on_message(message: str) -> None:
                 print(f"Received message: {message} from Jackal")
+                self.data_channel.send("Hello from workstation")
 
             @self.data_channel.on("close")
             def on_close() -> None:
@@ -71,4 +73,5 @@ async def run_receiver() -> None:
 
 
 if __name__ == "__main__":
+    logging.basicConfig(level=logging.INFO)
     asyncio.run(run_receiver())
