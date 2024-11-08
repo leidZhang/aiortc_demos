@@ -73,10 +73,11 @@ class JackalClient(WebRTCClient):
         self.data_channel: RTCDataChannel = None
         self.data_sender: MockStateSender = None
 
-    def _setup_callbacks(self) -> None:
+    def __setup_track_callbacks(self) -> None:
         camera_track: CameraStreamTrack = CameraStreamTrack()
         self.pc.addTrack(camera_track)
 
+    def __setup_datachannel_callbacks(self) -> None:
         self.data_channel = self.pc.createDataChannel("datachannel")
         self.data_sender: MockStateSender = MockStateSender(self.data_channel)
 
@@ -97,7 +98,8 @@ class JackalClient(WebRTCClient):
 
     async def run(self) -> None:
         await super().run()
-        self._setup_callbacks()
+        self.__setup_track_callbacks()
+        self.__setup_datachannel_callbacks()
         await initiate_signaling(self.pc, self.signaling)
 
         await self.done.wait()
@@ -111,5 +113,5 @@ async def run_initiator() -> None:
 
 
 if __name__ == "__main__":
-    logging.basicConfig(level=logging.DEBUG)
+    logging.basicConfig(level=logging.ERROR)
     asyncio.run(run_initiator())

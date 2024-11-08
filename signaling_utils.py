@@ -2,7 +2,7 @@ import json
 import logging
 import asyncio
 from typing import Any
-from abc import ABC, abstractmethod
+from abc import ABC
 
 import websockets
 from aiortc import (
@@ -78,10 +78,6 @@ class WebRTCClient(ABC):
             if self.pc.iceConnectionState == "failed":
                 await self.pc.close()
                 await self.signaling.close()
-
-    @abstractmethod
-    def _setup_callbacks(self) -> None:
-        ...
 
     async def run(self) -> None:
         await self.__setup()

@@ -30,28 +30,35 @@ class StationClient(WebRTCClient):
         self.data_channel_event: asyncio.Event = asyncio.Event()
         self.data_channel: RTCDataChannel = None
 
-    def _setup_callbacks(self) -> None:
+    def __setup_track_callbacks(self) -> None:
+        @self.pc.on("track")
+        def on_track(track: VideoStreamTrack):
+            if track.kind == "video":
+                self.__handle_video_track(track)
+
+    def __setup_datachannel_callbacks(self) -> None:
         @self.pc.on("datachannel")
         async def on_datachannel(channel: RTCDataChannel) -> None:
             self.data_channel = channel
 
             @self.data_channel.on("open")
-            def on_open() -> None:
-                print("Data channel opened by Jackal")
+            async def on_open() -> None:
+                while True:
+                    await asyncio.sleep(0.03)
+                    self.data_channel.send("Data channel opened by Jackal")
 
             @self.data_channel.on("message")
             def on_message(message: str) -> None:
                 print(f"Received message: {message} from Jackal")
-                self.data_channel.send("Hello from workstation")
+                # self.data_channel.send("Hello from workstation")
 
             @self.data_channel.on("close")
             def on_close() -> None:
                 print("Data channel closed by Jackal")
 
-        @self.pc.on("track")
-        def on_track(track: VideoStreamTrack):
-            if track.kind == "video":
-                self.__handle_video_track(track)
+            # NOTE: I dont know why this is needed, but without it, on_open() is not called
+            if self.data_channel.readyState == "open":
+                await on_open()
 
     def __handle_video_track(self, track) -> None:
         processor: VideoFrameProcessor = VideoFrameProcessor(track)
@@ -59,7 +66,8 @@ class StationClient(WebRTCClient):
 
     async def run(self) -> None:
         await super().run()
-        self._setup_callbacks()
+        self.__setup_track_callbacks()
+        self.__setup_datachannel_callbacks()
         await receive_signaling(self.pc, self.signaling)
 
         await self.done.wait()
@@ -73,5 +81,5 @@ async def run_receiver() -> None:
 
 
 if __name__ == "__main__":
-    logging.basicConfig(level=logging.DEBUG)
+    logging.basicConfig(level=logging.ERROR)
     asyncio.run(run_receiver())
