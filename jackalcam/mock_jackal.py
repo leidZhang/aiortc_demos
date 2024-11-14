@@ -9,6 +9,7 @@ import av
 import cv2
 import numpy as np
 from aiortc import VideoStreamTrack, RTCDataChannel
+from aiortc.contrib.media import MediaBlackhole
 
 from signaling_utils import WebRTCClient, initiate_signaling
 from settings import *
@@ -49,22 +50,26 @@ class CameraStreamTrack(VideoStreamTrack):
     def __init__(self, camera_id: int = 0) -> None:
         super().__init__()
         self.cap: cv2.VideoCapture = cv2.VideoCapture(camera_id)
+        self.video_frame: av.VideoFrame = None
 
     async def recv(self) -> av.VideoFrame:
         pts, time_base = await self.next_timestamp()
         ret, frame = self.cap.read()
         if not ret:
             return None
+        if self.video_frame is not None:
+            del self.video_frame # Release previous frame
 
         # Convert frame to RGB
         frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
         frame = np.ascontiguousarray(frame) # Make sure frame is contiguous in memory
 
         # Create VideoFrame
-        video_frame: av.VideoFrame = av.VideoFrame.from_ndarray(frame, format="rgb24")
-        video_frame.pts, video_frame.time_base = pts, time_base
+        self.video_frame: av.VideoFrame = av.VideoFrame.from_ndarray(frame, format="rgb24")
+        self.video_frame.pts, self.video_frame.time_base = pts, time_base
+        print("Frame sent to the work station")
 
-        return video_frame
+        return self.video_frame
 
 
 class JackalClient(WebRTCClient):
@@ -112,5 +117,16 @@ async def run_initiator() -> None:
 
 
 if __name__ == "__main__":
-    logging.basicConfig(level=logging.ERROR)
-    asyncio.run(run_initiator())
+    import tracemalloc
+
+    tracemalloc.start()
+    try:
+        logging.basicConfig(level=logging.ERROR)
+        asyncio.run(run_initiator())
+    except KeyboardInterrupt:
+        snapshot = tracemalloc.take_snapshot()
+        top_stats = snapshot.statistics('lineno')
+
+        print("[ Top 10 ]")
+        for stat in top_stats[:10]:
+            print(stat)

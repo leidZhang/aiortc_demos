@@ -95,6 +95,7 @@ async def initiate_signaling(pc: RTCPeerConnection, signaling: WebSocketSignalin
     # send sdp offer to signaling server
     logging.info("Sending SDP offer to signaling server...")
     # await signaling.send(pc.localDescription)
+    pc.localDescription.sdp.replace("96 VP8/90000", "96 H264/90000")
     await signaling.send({
         "sdp": pc.localDescription.sdp,
         "type": pc.localDescription.type
@@ -124,6 +125,7 @@ async def receive_signaling(pc: RTCPeerConnection, signaling: WebSocketSignaling
 
     # send sdp answer to signaling server
     print("Sending SDP answer to signaling server...")
+    pc.localDescription.sdp.replace("96 VP8/90000", "96 H264/90000")
     await signaling.send({
         "sdp": pc.localDescription.sdp,
         "type": pc.localDescription.type

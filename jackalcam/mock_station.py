@@ -5,23 +5,10 @@ import av
 import cv2
 import numpy as np
 from aiortc import RTCDataChannel, VideoStreamTrack
+from aiortc.contrib.media import MediaBlackhole, MediaRelay
 
 from signaling_utils import WebRTCClient, receive_signaling
 from settings import *
-
-
-class VideoFrameProcessor(VideoStreamTrack):
-    def __init__(self, track) -> None:
-        super().__init__()
-        self.track: VideoStreamTrack = track
-
-    async def recv(self) -> av.VideoFrame:
-        frame: av.VideoFrame = await self.track.recv()
-        image: np.ndarray = frame.to_ndarray(format="bgr24")
-
-        cv2.imshow("Video", image)
-        cv2.waitKey(1)
-        return frame
 
 
 class StationClient(WebRTCClient):
@@ -29,12 +16,20 @@ class StationClient(WebRTCClient):
         super().__init__(signaling_server_url, room_id)
         self.data_channel_event: asyncio.Event = asyncio.Event()
         self.data_channel: RTCDataChannel = None
+        self.media_relay: MediaRelay = MediaRelay()
 
     def __setup_track_callbacks(self) -> None:
         @self.pc.on("track")
-        def on_track(track: VideoStreamTrack):
+        async def on_track(track: VideoStreamTrack):
+            print("Track received", track.kind)
             if track.kind == "video":
-                self.__handle_video_track(track)
+                local_video = self.media_relay.subscribe(track)
+                while True:
+                    frame: av.VideoFrame = await local_video.recv()
+                    # Process the frame (e.g., display it using OpenCV)
+                    image: np.ndarray = frame.to_ndarray(format="bgr24")
+                    cv2.imshow("Received Video", image)
+                    cv2.waitKey(1)
 
     def __setup_datachannel_callbacks(self) -> None:
         @self.pc.on("datachannel")
@@ -49,7 +44,8 @@ class StationClient(WebRTCClient):
 
             @self.data_channel.on("message")
             def on_message(message: str) -> None:
-                print(f"Received message: {message} from Jackal")
+                ...
+                # print(f"Received message: {message} from Jackal")
                 # self.data_channel.send("Hello from workstation")
 
             @self.data_channel.on("close")
@@ -59,10 +55,6 @@ class StationClient(WebRTCClient):
             # NOTE: I dont know why this is needed, but without it, on_open() is not called
             if self.data_channel.readyState == "open":
                 await on_open()
-
-    def __handle_video_track(self, track) -> None:
-        processor: VideoFrameProcessor = VideoFrameProcessor(track)
-        self.pc.addTrack(processor)
 
     async def run(self) -> None:
         await super().run()
