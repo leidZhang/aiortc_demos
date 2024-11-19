@@ -45,7 +45,8 @@ class ColoredStreamTrack(VideoStreamTrack):
 
     async def recv(self) -> av.VideoFrame:
         pts, time_base = await self.next_timestamp()
-        frame = np.ones((480, 640, 3), dtype=np.uint8) * self.channel_num
+        frame = np.ones((480, 640, 3), dtype=np.uint8) * self.channel_num // 2
+        print(f"Colored frame {self.channel_num // 2} sent to the work station")
         self.channel_num = (self.channel_num + 1) % 256
 
         # Convert frame to RGB
@@ -55,7 +56,6 @@ class ColoredStreamTrack(VideoStreamTrack):
         # Create VideoFrame
         video_frame: av.VideoFrame = av.VideoFrame.from_ndarray(frame, format="rgb24")
         video_frame.pts, video_frame.time_base = pts, time_base
-        print("Colored frame sent to the work station")
 
         return video_frame
 
@@ -75,6 +75,7 @@ class MosaicStreamTrack(VideoStreamTrack):
         print("Mosaic frame sent to the work station")
 
         return video_frame
+
 
 class JackalClient(WebRTCClient):
     def __init__(self, signaling_ip: str, signaling_port: int) -> None:
